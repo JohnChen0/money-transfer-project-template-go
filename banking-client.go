@@ -8,6 +8,7 @@ package app
 // you to experiment with failures and timeouts.
 import (
 	"errors"
+	"log"
 	"math/rand"
 )
 
@@ -20,15 +21,15 @@ type bank struct {
 	Accounts []account
 }
 
-func (b bank) findAccount(accountNumber string) (account, error) {
+func (b bank) findAccount(accountNumber string) (*account, error) {
 
-	for _, v := range b.Accounts {
+	for i, v := range b.Accounts {
 		if v.AccountNumber == accountNumber {
-			return v, nil
+			return &b.Accounts[i], nil
 		}
 	}
 
-	return account{}, errors.New("account not found")
+	return nil, errors.New("account not found")
 }
 
 // InsufficientFundsError is raised when the account doesn't have enough money.
@@ -77,6 +78,12 @@ func (client BankingService) Withdraw(accountNumber string, amount int, referenc
 		return "", &InsufficientFundsError{}
 	}
 
+	oldBalance := acct.Balance
+	newBalance := oldBalance - int64(amount)
+	acct.Balance = newBalance
+	log.Printf("Completed withdraw $%d from account %s, balance $%d -> $%d",
+		amount, accountNumber, oldBalance, newBalance)
+
 	return generateTransactionID("W", 10), nil
 }
 
@@ -87,10 +94,16 @@ func (client BankingService) Withdraw(accountNumber string, amount int, referenc
 // Returns InvalidAccountError if the account is invalid
 func (client BankingService) Deposit(accountNumber string, amount int, referenceID string) (string, error) {
 
-	_, err := mockBank.findAccount(accountNumber)
+	acct, err := mockBank.findAccount(accountNumber)
 	if err != nil {
 		return "", &InvalidAccountError{}
 	}
+
+	oldBalance := acct.Balance
+	newBalance := oldBalance + int64(amount)
+	acct.Balance = newBalance
+	log.Printf("Completed deposit $%d to account %s, balance $%d -> $%d",
+		amount, accountNumber, oldBalance, newBalance)
 
 	return generateTransactionID("D", 10), nil
 }
