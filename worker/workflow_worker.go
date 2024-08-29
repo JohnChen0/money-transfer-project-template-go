@@ -20,11 +20,8 @@ func main() {
 
 	w := worker.New(c, app.MoneyTransferTaskQueueName, worker.Options{})
 
-	// This worker hosts both Workflow and Activity functions.
+	// This worker hosts a Workflow function.
 	w.RegisterWorkflow(app.MoneyTransfer)
-	w.RegisterActivity(app.Withdraw)
-	w.RegisterActivity(app.Deposit)
-	w.RegisterActivity(app.Refund)
 
 	// Start listening to the Task Queue.
 	err = w.Run(worker.InterruptCh())
